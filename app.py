@@ -1,31 +1,57 @@
 import streamlit as st
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
 # ---------------- PAGE CONFIG ----------------
+
 st.set_page_config(
     page_title="OKC Home Affordability Calculator",
     page_icon="🏡",
     layout="centered"
 )
 
+# ---------------- GOOGLE SHEETS SETUP ----------------
+
+scope = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive"
+]
+
+creds = ServiceAccountCredentials.from_json_keyfile_name(
+    "credentials.json",
+    scope
+)
+
+client = gspread.authorize(creds)
+
+sheet = client.open("OKC Home Calculator Leads").sheet1
+
 # ---------------- HEADER ----------------
+
 st.title("🏡 Oklahoma Rent vs Buy Calculator")
 
 st.write(
     "Find out what home price you may be able to afford based on your current rent."
 )
 
+st.info(
+    "This tool is designed for Oklahoma homebuyers and first-time buyers exploring their options."
+)
+
 st.divider()
 
 # ---------------- LEAD INFO ----------------
+
 st.subheader("Your Information")
 
 name = st.text_input("Full Name")
-email = st.text_input("Email")
+email = st.text_input("Email Address")
 phone = st.text_input("Phone Number")
 
 st.divider()
 
 # ---------------- INPUTS ----------------
+
 st.subheader("Monthly Housing Information")
 
 rent = st.slider(
@@ -55,16 +81,21 @@ down_payment = st.slider(
 st.divider()
 
 # ---------------- CALCULATION ----------------
+
 if st.button("Calculate My Buying Power"):
 
     if not name or not email:
-        st.warning("Please enter your name and email.")
+
+        st.warning("Please enter your name and email address.")
+
     else:
 
         # Oklahoma affordability estimate
         factor = 0.0072
 
         estimated_price = rent / factor
+
+        # ---------------- RESULTS ----------------
 
         st.success(
             f"🎯 Estimated Home Price: ${estimated_price:,.0f}"
@@ -79,17 +110,23 @@ if st.button("Calculate My Buying Power"):
         )
 
         st.info(
-            "Down payment assistance and FHA programs may help reduce upfront costs."
+            "FHA and down payment assistance programs may help reduce upfront costs."
         )
 
-        st.write("📩 I'll reach out with personalized options in OKC!")
+        st.write(
+            "📩 Brandi Kitchens will reach out with personalized Oklahoma home options."
+        )
 
-        # ---------------- SAVE LEAD ----------------
-        with open("leads.txt", "a") as f:
-            f.write(
-                f"{name}, {email}, {phone}, "
-                f"Rent: {rent}, "
-                f"Rate: {interest_rate}, "
-                f"Down: {down_payment}, "
-                f"Estimated Price: {estimated_price}\n"
-            )
+        # ---------------- SAVE TO GOOGLE SHEETS ----------------
+
+        sheet.append_row([
+            name,
+            email,
+            phone,
+            rent,
+            interest_rate,
+            down_payment,
+            round(estimated_price)
+        ])
+
+        st.success("✅ Your information has been submitted successfully!")
