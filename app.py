@@ -17,8 +17,8 @@ scope = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = ServiceAccountCredentials.from_json_keyfile_name(
-    "credentials.json",
+creds = ServiceAccountCredentials.from_json_keyfile_dict(
+    st.secrets["gcp_service_account"],
     scope
 )
 
@@ -35,7 +35,7 @@ st.write(
 )
 
 st.info(
-    "This tool is designed for Oklahoma homebuyers and first-time buyers exploring their options."
+    "This tool is designed for Oklahoma renters, first-time buyers, and future homeowners exploring their options."
 )
 
 st.divider()
@@ -85,21 +85,13 @@ st.divider()
 if st.button("Calculate My Buying Power"):
 
     if not name or not email:
-
         st.warning("Please enter your name and email address.")
 
     else:
-
-        # Oklahoma affordability estimate
         factor = 0.0072
-
         estimated_price = rent / factor
 
-        # ---------------- RESULTS ----------------
-
-        st.success(
-            f"🎯 Estimated Home Price: ${estimated_price:,.0f}"
-        )
+        st.success(f"🎯 Estimated Home Price: ${estimated_price:,.0f}")
 
         st.subheader("What This Means")
 
@@ -116,8 +108,6 @@ if st.button("Calculate My Buying Power"):
         st.write(
             "📩 Brandi Kitchens will reach out with personalized Oklahoma home options."
         )
-
-        # ---------------- SAVE TO GOOGLE SHEETS ----------------
 
         sheet.append_row([
             name,
